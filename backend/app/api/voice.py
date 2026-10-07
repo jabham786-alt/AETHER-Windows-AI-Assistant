@@ -2,7 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -75,7 +75,7 @@ async def transcribe(
 
 
 @router.post("/speak")
-async def speak(payload: SpeakRequest):
+async def speak(payload: SpeakRequest, background_tasks: BackgroundTasks):
     text = payload.text.strip()
     if not text:
         raise HTTPException(status_code=400, detail="Text is empty.")
@@ -105,11 +105,11 @@ async def speak(payload: SpeakRequest):
         engine.stop()
         if not Path(output.name).exists() or Path(output.name).stat().st_size == 0:
             raise RuntimeError("Windows TTS produced no audio.")
+        background_tasks.add_task(os.unlink, output.name)
         return FileResponse(
             output.name,
             media_type="audio/wav",
             filename="aether-response.wav",
-            background=None,
         )
     except Exception as exc:
         try:
