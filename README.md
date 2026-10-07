@@ -2,6 +2,27 @@
 
 AETHER is a personal Windows AI desktop assistant.
 
+## Phase 2 — Voice AI (فری / لوکل)
+
+Phase 2 paid voice APIs پر منحصر نہیں ہے۔ موجودہ implementation میں:
+
+- **Speech-to-Text:** Local `faster-whisper` — API key نہیں چاہیے
+- **Text-to-Speech:** Windows local TTS (`pyttsx3`) — API key نہیں چاہیے
+- **Microphone:** Windows/Electron browser media API
+- **Wake word:** Phase 2 میں Push-to-Talk رکھا گیا ہے؛ ہمیشہ سننے والا wake-word بعد میں optional module ہوگا
+- **Voice API:** `/api/voice/transcribe`, `/api/voice/speak`, `/api/voice/providers`
+
+### Phase 2 Setup
+
+اسی setup command سے voice dependencies بھی install ہوں گی:
+
+    Set-ExecutionPolicy -Scope Process Bypass
+    .\\scripts\\setup.ps1
+
+پہلی transcription پر Whisper model مقامی طور پر download ہو سکتا ہے۔ اسے ڈاؤن لوڈ کرنے کے لیے internet درکار ہوگا، لیکن استعمال کے لیے کسی paid API subscription کی ضرورت نہیں۔ پہلے سے چھوٹا `base` model default ہے۔ Windows CPU پر کمزور مشین ہو تو `AETHER_WHISPER_MODEL=tiny` استعمال کیا جا سکتا ہے۔
+
+**اہم:** فری ہونے کا مطلب یہ نہیں کہ کوئی cloud provider ہمیشہ کے لیے مفت قیمت کی ضمانت دیتا ہے؛ AETHER Phase 2 میں بنیادی voice path cloud/API billing سے آزاد رکھا گیا ہے۔
+
 ## Phase 1 — Foundation
 
 - Electron desktop shell
