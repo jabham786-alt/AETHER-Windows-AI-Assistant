@@ -1,5 +1,5 @@
 import {useEffect,useState} from "react";
-import {automationActions,automationHistory,executeAutomation} from "./api";
+import {automationHistory,executeAutomation} from "./api";
 
 const presets=[
   ["open_app","Open Notepad","app","notepad"],
