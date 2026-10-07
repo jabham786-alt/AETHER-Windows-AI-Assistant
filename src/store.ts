@@ -1,4 +1,4 @@
 import {create} from "zustand";
 export type Message={id:string;role:"user"|"assistant";content:string};
-type State={active:"dashboard"|"chat"|"voice"|"automation"|"system"|"settings";messages:Message[];online:boolean;setActive:(v:State["active"])=>void;add:(m:Message)=>void;clear:()=>void;setOnline:(v:boolean)=>void};
+type State={active:"dashboard"|"chat"|"voice"|"automation"|"command"|"system"|"settings";messages:Message[];online:boolean;setActive:(v:State["active"])=>void;add:(m:Message)=>void;clear:()=>void;setOnline:(v:boolean)=>void};
 export const useStore=create<State>(set=>({active:"dashboard",messages:[],online:false,setActive:v=>set({active:v}),add:m=>set(s=>({messages:[...s.messages,m]})),clear:()=>set({messages:[]}),setOnline:v=>set({online:v})}));
