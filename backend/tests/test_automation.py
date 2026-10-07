@@ -23,3 +23,11 @@ def test_delete_requires_confirmation():
 def test_unsupported_action():
     r = client.post("/api/automation/execute", json={"action": "run_shell", "params": {}})
     assert r.status_code == 400
+
+def test_invalid_action_parameters_return_400():
+    r = client.post("/api/automation/execute", json={
+        "action": "open_app",
+        "params": {},
+    })
+    assert r.status_code == 400
+    assert "required" in r.json()["detail"].lower()
