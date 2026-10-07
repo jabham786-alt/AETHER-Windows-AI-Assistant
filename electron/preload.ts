@@ -1,0 +1,1 @@
+import {contextBridge,ipcRenderer} from "electron";contextBridge.exposeInMainWorld("aether",{getAppInfo:()=>ipcRenderer.invoke("app:info")});declare global{interface Window{aether:{getAppInfo:()=>Promise<{name:string;version:string;platform:string}>}}}
