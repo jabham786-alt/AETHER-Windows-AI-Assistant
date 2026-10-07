@@ -23,6 +23,51 @@ Phase 2 paid voice APIs پر منحصر نہیں ہے۔ موجودہ implementat
 
 **اہم:** فری ہونے کا مطلب یہ نہیں کہ کوئی cloud provider ہمیشہ کے لیے مفت قیمت کی ضمانت دیتا ہے؛ AETHER Phase 2 میں بنیادی voice path cloud/API billing سے آزاد رکھا گیا ہے۔
 
+## Phase 3 — Windows Control / Automation
+
+Phase 3 میں محفوظ local Windows automation شامل ہے۔ اس میں paid API کی ضرورت نہیں ہے۔
+
+### موجودہ capabilities
+
+- Allowlisted apps: Notepad, Calculator, Paint, Explorer
+- HTTP/HTTPS URL اور web search کھولنا
+- موجودہ folders کھولنا
+- files/folders search کرنا
+- folder یا empty file بنانا
+- file rename/copy/move/delete
+- action history SQLite میں محفوظ کرنا
+- risk-based permission system
+- high-risk delete کے لیے explicit confirmation
+- arbitrary shell/PowerShell execution **نہیں** ہے
+
+### Security model
+
+AETHER کسی AI-generated string کو براہِ راست shell command کے طور پر execute نہیں کرتا۔ ہر request کو ایک مخصوص allowlisted action، validation اور permission check سے گزرنا ہوتا ہے:
+
+    AI / UI
+      ↓
+    Allowed Action
+      ↓
+    Parameter Validation
+      ↓
+    Risk Check
+      ↓
+    Confirmation (when required)
+      ↓
+    Windows Action
+      ↓
+    Action History
+
+Low-risk actions براہِ راست چل سکتے ہیں۔ File creation/rename/copy/move confirmation مانگتے ہیں، جبکہ delete high-risk ہے اور ہمیشہ explicit confirmation مانگتا ہے۔
+
+### Phase 3 API
+
+- GET `/api/automation/actions`
+- POST `/api/automation/execute`
+- GET `/api/automation/history`
+
+Phase 3 کا اگلا incremental حصہ Windows volume/mute، screenshots، richer browser automation اور voice-to-action intent planning ہو سکتا ہے؛ انہیں arbitrary command execution کے بغیر permission model کے ساتھ شامل کیا جائے گا۔
+
 ## Phase 1 — Foundation
 
 - Electron desktop shell
