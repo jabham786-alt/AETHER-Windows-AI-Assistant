@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 type ShellType="auto"|"powershell"|"cmd"|"bash"|"wsl";
 type CommandId="check_python"|"install_backend"|"run_backend_tests"|"install_frontend"|"typecheck"|"build";
 
-const COMMANDS:Array<{id:CommandId;label:string;description:string}>=[
+const COMMANDS:Array<{id:CommandId;label:string;description:string}>= [
   {id:"check_python",label:"Check Python",description:"Python version اور virtual environment کی جانچ"},
   {id:"install_backend",label:"Install Backend",description:"backend/requirements.txt سے dependencies انسٹال کریں"},
   {id:"run_backend_tests",label:"Run Backend Tests",description:"تمام backend pytest tests چلائیں"},
@@ -49,9 +49,15 @@ export default function CommandCenter(){
   const[selected,setSelected]=useState<CommandId>("check_python");
   const[message,setMessage]=useState("");
   const[busy,setBusy]=useState(false);
+
   useEffect(()=>{window.aether.getShellInfo().then(x=>setDetected(x.shell)).catch(()=>setDetected("unknown"))},[]);
-  const effectiveShell=useMemo(()=>shell==="auto"?(detected as ShellType==="cmd"?"cmd":detected as ShellType==="bash"?"bash":"powershell"):shell,[shell,detected]);
+  const effectiveShell=useMemo(()=>{
+    if(shell!=="auto")return shell;
+    if(detected==="cmd"||detected==="bash"||detected==="wsl")return detected;
+    return "powershell";
+  },[shell,detected]);
   const command=commandText(effectiveShell,selected);
+
   async function copy(){await navigator.clipboard.writeText(command);setMessage("کمانڈ کلپ بورڈ میں کاپی ہو گئی۔")}
   async function run(){
     setBusy(true);setMessage("");
@@ -59,6 +65,7 @@ export default function CommandCenter(){
     catch(e){setMessage(e instanceof Error?e.message:"کمانڈ چلانے میں مسئلہ آیا۔")}
     finally{setBusy(false)}
   }
+
   return <section className="command-center">
     <div className="head"><div><label>COMMAND CENTER</label><h1>Shell-aware tools</h1><p>PowerShell، CMD، Bash اور WSL کے لیے درست path syntax۔ arbitrary shell command execution دستیاب نہیں۔</p></div></div>
     <div className="command-grid">
