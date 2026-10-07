@@ -23,6 +23,30 @@ Phase 2 paid voice APIs پر منحصر نہیں ہے۔ موجودہ implementat
 
 **اہم:** فری ہونے کا مطلب یہ نہیں کہ کوئی cloud provider ہمیشہ کے لیے مفت قیمت کی ضمانت دیتا ہے؛ AETHER Phase 2 میں بنیادی voice path cloud/API billing سے آزاد رکھا گیا ہے۔
 
+## Phase 4 — Memory + RAG
+
+Phase 4 adds a local-first memory layer. It does not require a paid vector database or embedding API.
+
+### Current capabilities
+
+- SQLite `memories` table
+- Create, list, search, edit and delete memories
+- Memory categories and source metadata
+- Lightweight local keyword retrieval
+- Relevant memories are injected into AI Chat as context when matched
+- Memory management UI in the desktop app
+- Memory data stays in AETHER's local SQLite database
+
+### Phase 4 API
+
+- GET `/api/memories`
+- POST `/api/memories`
+- PATCH `/api/memories/{memory_id}`
+- DELETE `/api/memories/{memory_id}`
+- GET `/api/memories/search?q=...`
+
+This is intentionally a safe incremental RAG foundation. Semantic embeddings, document ingestion, chunking and vector indexes can be added later without giving the AI arbitrary filesystem or shell access.
+
 ## Phase 3 — Windows Control / Automation
 
 Phase 3 میں محفوظ local Windows automation شامل ہے۔ اس میں paid API کی ضرورت نہیں ہے۔
