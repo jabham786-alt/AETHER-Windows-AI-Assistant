@@ -52,7 +52,7 @@ def run_action(request: ActionRequest):
         }
     try:
         result = execute(request.action, request.params)
-    except (ValueError, RuntimeError, OSError) as exc:
+    except (ValueError, RuntimeError, OSError, TypeError) as exc:
         with SessionLocal() as db:
             db.add(AutomationAction(
                 id=str(uuid.uuid4()), action=request.action, risk=risk.value,
