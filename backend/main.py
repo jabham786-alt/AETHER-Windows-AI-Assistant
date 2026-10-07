@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.api import health, chat, system, voice, automation, memory
+from backend.app.api import health, chat, system, voice, automation, memory, trading
 from backend.app.database import Base, engine
 
 Base.metadata.create_all(bind=engine)
@@ -19,3 +19,4 @@ app.include_router(system.router, prefix="/api")
 app.include_router(voice.router, prefix="/api")
 app.include_router(automation.router, prefix="/api")
 app.include_router(memory.router, prefix="/api")
+app.include_router(trading.router, prefix="/api")
