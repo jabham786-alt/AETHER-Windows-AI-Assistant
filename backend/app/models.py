@@ -17,3 +17,12 @@ class AutomationAction(Base):
  status:Mapped[str]=mapped_column(String(20))
  details:Mapped[str]=mapped_column(Text)
  created_at:Mapped[datetime]=mapped_column(DateTime,default=lambda:datetime.now(timezone.utc))
+
+class Memory(Base):
+ __tablename__="memories"
+ id:Mapped[str]=mapped_column(String(36),primary_key=True)
+ category:Mapped[str]=mapped_column(String(40),default="general")
+ content:Mapped[str]=mapped_column(Text)
+ source:Mapped[str]=mapped_column(String(40),default="user")
+ created_at:Mapped[datetime]=mapped_column(DateTime,default=lambda:datetime.now(timezone.utc))
+ updated_at:Mapped[datetime]=mapped_column(DateTime,default=lambda:datetime.now(timezone.utc),onupdate=lambda:datetime.now(timezone.utc))
