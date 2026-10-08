@@ -48,11 +48,15 @@ export async function chatForVoice(
   }>;
 }
 
-export async function speakText(text: string, rate = 175) {
+export async function speakText(
+  text: string,
+  rate = 175,
+  language = "",
+) {
   const r = await fetch(API + "/voice/speak", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, rate }),
+    body: JSON.stringify({ text, rate, language }),
   });
   if (!r.ok) throw new Error(await readError(r, "Voice synthesis failed"));
   return r.blob();
