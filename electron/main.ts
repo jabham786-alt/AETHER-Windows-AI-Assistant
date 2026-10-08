@@ -14,10 +14,10 @@ function pythonExecutable(){
   if(fs.existsSync(local))return local;
   return "python3";
 }
-const SAFE_COMMANDS:Record<SafeCommand,{file:string;args:string[]}>={
-  check_python:{file:process.platform==="win32"?"python.exe":"python3",args:["--version"]},
-  install_backend:{file:process.platform==="win32"?"python.exe":"python3",args:["-m","pip","install","-r",process.platform==="win32"?"backend\\requirements.txt":"backend/requirements.txt"]},
-  run_backend_tests:{file:process.platform==="win32"?"python.exe":"python3",args:["-m","pytest",process.platform==="win32"?"backend\\tests":"backend/tests","-q"]},
+const SAFE_COMMANDS:Record<SafeCommand,{args:string[]}>={
+  check_python:{args:["--version"]},
+  install_backend:{args:["-m","pip","install","-r",process.platform==="win32"?"backend\\requirements.txt":"backend/requirements.txt"]},
+  run_backend_tests:{args:["-m","pytest",process.platform==="win32"?"backend\\tests":"backend/tests","-q"]},
   install_frontend:{args:["install"]},
   typecheck:{args:["run","typecheck"]},
   build:{args:["run","build"]},
