@@ -48,11 +48,7 @@ export async function chatForVoice(
   }>;
 }
 
-export async function speakText(
-  text: string,
-  rate = 175,
-  language = "",
-) {
+export async function speakText(text: string, rate = 175, language = "") {
   const r = await fetch(API + "/voice/speak", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -66,4 +62,8 @@ export async function voiceProviders() {
   const r = await fetch(API + "/voice/providers");
   if (!r.ok) throw new Error("Voice provider status unavailable");
   return r.json();
+}
+
+export function stopSpeaking() {
+  window.speechSynthesis?.cancel();
 }
