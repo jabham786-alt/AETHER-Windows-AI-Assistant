@@ -48,3 +48,25 @@ def test_calendar_rejects_invalid_time_range():
         "end": "2026-11-01T10:00:00+05:00",
     })
     assert response.status_code == 400
+
+def test_calendar_rejects_timezone_naive_datetime():
+    response = client.post("/api/integrations/google/calendar", json={
+        "summary": "AETHER test",
+        "start": "2026-11-01T10:00:00",
+        "end": "2026-11-01T10:30:00",
+    })
+    assert response.status_code == 400
+    assert "timezone" in response.json()["detail"].lower()
+
+
+def test_deepgram_requires_api_key(monkeypatch):
+    from backend.app.config import get_settings
+    settings = get_settings()
+    monkeypatch.setattr(settings, "stt_provider", "deepgram")
+    monkeypatch.setattr(settings, "deepgram_api_key", "")
+    response = client.post(
+        "/api/voice/transcribe",
+        files={"audio": ("sample.webm", b"fake-audio", "audio/webm")},
+    )
+    assert response.status_code == 503
+    assert "DEEPGRAM_API_KEY" in response.json()["detail"]
