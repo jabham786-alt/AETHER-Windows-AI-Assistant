@@ -36,10 +36,10 @@ export default function Integrations(){
   async function loadCalendar(){const result=await run(()=>request("/integrations/google/calendar"));if(result)setCalendar(result)}
   async function loadContacts(){const result=await run(()=>request("/integrations/google/contacts"));if(result)setContacts(result)}
   async function loadGmail(){const result=await run(()=>request("/integrations/google/gmail?limit=10&q="+encodeURIComponent(gmailQuery)));if(result)setGmail(result)}
-  async function prepareEmail(){const result=await run(()=>post("/integrations/google/gmail/send",{...email,confirmed:false}));if(result?.status==="confirmation_required")setPendingEmail(result.preview)}
-  async function confirmEmail(){const result=await run(()=>post("/integrations/google/gmail/send",{...email,confirmed:true}),"Email sent.");if(result?.status==="sent")setPendingEmail(null)}
-  async function prepareEvent(){const result=await run(()=>post("/integrations/google/calendar",{...event,start:new Date(event.start).toISOString(),end:new Date(event.end).toISOString(),confirmed:false}));if(result?.status==="confirmation_required")setPendingEvent(result.preview)}
-  async function confirmEvent(){const result=await run(()=>post("/integrations/google/calendar",{...event,start:new Date(event.start).toISOString(),end:new Date(event.end).toISOString(),confirmed:true}),"Calendar event created.");if(result?.status==="created")setPendingEvent(null)}
+  async function prepareEmail(){const result=await run(()=>post("/integrations/google/gmail/send",{...email}));if(result?.status==="confirmation_required")setPendingEmail(result)}
+  async function confirmEmail(){const result=await run(()=>post("/integrations/google/gmail/send",{...email,confirmation_token:pendingEmail?.confirmation_token}),"Email sent.");if(result?.status==="sent")setPendingEmail(null)}
+  async function prepareEvent(){const result=await run(()=>post("/integrations/google/calendar",{...event,start:new Date(event.start).toISOString(),end:new Date(event.end).toISOString(),}));if(result?.status==="confirmation_required")setPendingEvent(result)}
+  async function confirmEvent(){const result=await run(()=>post("/integrations/google/calendar",{...event,start:new Date(event.start).toISOString(),end:new Date(event.end).toISOString(),confirmation_token:pendingEvent?.confirmation_token}),"Calendar event created.");if(result?.status==="created")setPendingEvent(null)}
 
   return <section className="integrations">
     <div className="head"><div><label>AETHER / CONNECTORS</label><h1>Integrations</h1><p>Cloud services are optional. API keys stay on the backend; sensitive actions need your confirmation.</p></div><button className="ghost" onClick={refresh} disabled={busy}><RefreshCw size={15}/> Refresh status</button></div>
@@ -70,7 +70,7 @@ export default function Integrations(){
         <label className="field">Title<input value={event.summary} onChange={e=>setEvent({...event,summary:e.target.value})} maxLength={200}/></label>
         <div className="integration-two"><label className="field">Start<input type="datetime-local" value={event.start} onChange={e=>setEvent({...event,start:e.target.value})}/></label><label className="field">End<input type="datetime-local" value={event.end} onChange={e=>setEvent({...event,end:e.target.value})}/></label></div>
         <label className="field">Description<input value={event.description} onChange={e=>setEvent({...event,description:e.target.value})} maxLength={4000}/></label>
-        {!pendingEvent?<button disabled={busy||!event.summary||!event.start||!event.end} onClick={prepareEvent}>Review event</button>:<div className="confirm-box"><b>Confirm calendar event</b><pre>{JSON.stringify(pendingEvent,null,2)}</pre><button disabled={busy} onClick={confirmEvent}>Confirm Create</button><button className="ghost" onClick={()=>setPendingEvent(null)}>Cancel</button></div>}
+        {!pendingEvent?<button disabled={busy||!event.summary||!event.start||!event.end} onClick={prepareEvent}>Review event</button>:<div className="confirm-box"><b>Confirm calendar event</b><pre>{JSON.stringify(pendingEvent.preview,null,2)}</pre><button disabled={busy} onClick={confirmEvent}>Confirm Create</button><button className="ghost" onClick={()=>setPendingEvent(null)}>Cancel</button></div>}
       </div>
       <div className="panel">
         <h2><Contact size={18}/> Google Contacts</h2><button className="ghost" disabled={busy} onClick={loadContacts}>Load contacts</button>
@@ -85,7 +85,7 @@ export default function Integrations(){
         <label className="field">To<input type="email" value={email.to} onChange={e=>setEmail({...email,to:e.target.value})}/></label>
         <label className="field">Subject<input value={email.subject} onChange={e=>setEmail({...email,subject:e.target.value})} maxLength={200}/></label>
         <label className="field">Message<input value={email.body} onChange={e=>setEmail({...email,body:e.target.value})} maxLength={10000}/></label>
-        {!pendingEmail?<button disabled={busy||!email.to||!email.subject||!email.body} onClick={prepareEmail}>Review email</button>:<div className="confirm-box"><b><ShieldCheck size={16}/> Confirm sending email</b><pre>{JSON.stringify(pendingEmail,null,2)}</pre><button disabled={busy} onClick={confirmEmail}>Confirm Send</button><button className="ghost" onClick={()=>setPendingEmail(null)}>Cancel</button></div>}
+        {!pendingEmail?<button disabled={busy||!email.to||!email.subject||!email.body} onClick={prepareEmail}>Review email</button>:<div className="confirm-box"><b><ShieldCheck size={16}/> Confirm sending email</b><pre>{JSON.stringify(pendingEmail.preview,null,2)}</pre><button disabled={busy} onClick={confirmEmail}>Confirm Send</button><button className="ghost" onClick={()=>setPendingEmail(null)}>Cancel</button></div>}
       </div>
     </div>
     <p className="muted">Policy Engine محفوظ ہے۔ Google write actions صرف preview دکھانے کے بعد آپ کی الگ confirmation پر چلتے ہیں۔</p>
