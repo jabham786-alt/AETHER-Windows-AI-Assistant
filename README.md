@@ -51,10 +51,10 @@ The OAuth redirect URI must match exactly. Google may require a test user to be 
 - POST /api/integrations/search — Tavily web search
 - GET /api/integrations/google/auth-url and GET /api/integrations/google/callback — Google OAuth
 - GET /api/integrations/google/calendar — upcoming events
-- POST /api/integrations/google/calendar — create event; first request returns a confirmation preview, then repeat with confirmed: true
+- POST /api/integrations/google/calendar — create event; first request returns a confirmation preview, then repeat with the returned confirmation_token
 - GET /api/integrations/google/contacts — contact names, emails and phone numbers
 - GET /api/integrations/google/gmail — message metadata and snippets, not full email bodies
-- POST /api/integrations/google/gmail/send — first request returns a preview; repeat with confirmed: true only after reviewing it
+- POST /api/integrations/google/gmail/send — first request returns a preview; repeat with the returned confirmation_token only after reviewing it
 
 Google scopes are limited to Calendar event access, read-only contacts, read-only Gmail and Gmail send. Disconnect by deleting backend/data/google_token.json and revoking AETHER in your Google Account security settings.
 
@@ -89,7 +89,7 @@ API: GET /api/memories, POST /api/memories, PATCH /api/memories/{memory_id}, DEL
 - SQLite action history, risk-based permissions and explicit confirmation for risky actions.
 - Arbitrary shell/PowerShell execution is intentionally excluded.
 
-The existing Policy Engine and Windows action allowlist remain authoritative. Cloud integrations do not execute web-search results as commands. Sending email and creating calendar events require a second request with explicit confirmed: true; inspect the returned preview first.
+The existing Policy Engine and Windows action allowlist remain authoritative. Cloud integrations do not execute web-search results as commands. Sending email and creating calendar events require a second request with the short-lived confirmation_token returned in the preview; inspect the preview first. Tokens are single-use, expire after five minutes, and are bound to the exact action data.
 
 ## Foundation and setup
 
