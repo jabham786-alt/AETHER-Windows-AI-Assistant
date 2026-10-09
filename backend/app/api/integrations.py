@@ -1,5 +1,9 @@
 import base64
+import hashlib
+import json
 import os
+import secrets
+import time
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from pathlib import Path
@@ -18,6 +22,27 @@ _GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
 ]
 _oauth_state: str | None = None
+_pending_confirmations: dict[str, tuple[str, float]] = {}
+
+
+def _issue_confirmation(action: str, data: dict) -> str:
+    token = secrets.token_urlsafe(32)
+    fingerprint = hashlib.sha256((action + json.dumps(data, sort_keys=True, default=str)).encode("utf-8")).hexdigest()
+    now = time.monotonic()
+    for old_token, (_, expiry) in list(_pending_confirmations.items()):
+        if expiry <= now:
+            _pending_confirmations.pop(old_token, None)
+    _pending_confirmations[token] = (fingerprint, now + 300)
+    return token
+
+
+def _consume_confirmation(token: str | None, action: str, data: dict) -> None:
+    if not token:
+        raise HTTPException(status_code=403, detail="Explicit confirmation token is required. Request a fresh preview first.")
+    record = _pending_confirmations.pop(token, None)
+    fingerprint = hashlib.sha256((action + json.dumps(data, sort_keys=True, default=str)).encode("utf-8")).hexdigest()
+    if not record or record[1] <= time.monotonic() or not secrets.compare_digest(record[0], fingerprint):
+        raise HTTPException(status_code=403, detail="Confirmation expired or does not match this action. Request a fresh preview.")
 
 
 class SearchRequest(BaseModel):
@@ -30,14 +55,14 @@ class CalendarEventRequest(BaseModel):
     start: datetime
     end: datetime
     description: str = Field(default="", max_length=4000)
-    confirmed: bool = False
+    confirmation_token: str | None = None
 
 
 class SendEmailRequest(BaseModel):
     to: EmailStr
     subject: str = Field(min_length=1, max_length=200)
     body: str = Field(min_length=1, max_length=10000)
-    confirmed: bool = False
+    confirmation_token: str | None = None
 
 
 def _google_credentials():
@@ -178,9 +203,11 @@ def create_calendar_event(payload: CalendarEventRequest):
         raise HTTPException(status_code=400, detail="Calendar event start and end must include a timezone.")
     if payload.end <= payload.start:
         raise HTTPException(status_code=400, detail="Event end must be later than its start.")
-    preview = {"summary": payload.summary, "start": payload.start.isoformat(), "end": payload.end.isoformat(), "description": payload.description}
-    if not payload.confirmed:
-        return {"status": "confirmation_required", "action": "create_calendar_event", "preview": preview}
+    event_data = {"summary": payload.summary, "start": payload.start.isoformat(), "end": payload.end.isoformat(), "description": payload.description}
+    if not payload.confirmation_token:
+        token = _issue_confirmation("create_calendar_event", event_data)
+        return {"status": "confirmation_required", "action": "create_calendar_event", "preview": event_data, "confirmation_token": token}
+    _consume_confirmation(payload.confirmation_token, "create_calendar_event", event_data)
     service = _google_service("calendar", "v3")
     event = {
         "summary": payload.summary,
@@ -230,8 +257,11 @@ def gmail_messages(limit: int = Query(default=10, ge=1, le=25), q: str = Query(d
 
 @router.post("/google/gmail/send")
 def send_gmail(payload: SendEmailRequest):
-    if not payload.confirmed:
-        return {"status": "confirmation_required", "action": "send_email", "preview": {"to": str(payload.to), "subject": payload.subject, "body": payload.body}}
+    email_data = {"to": str(payload.to), "subject": payload.subject, "body": payload.body}
+    if not payload.confirmation_token:
+        token = _issue_confirmation("send_email", email_data)
+        return {"status": "confirmation_required", "action": "send_email", "preview": email_data, "confirmation_token": token}
+    _consume_confirmation(payload.confirmation_token, "send_email", email_data)
     service = _google_service("gmail", "v1")
     message = MIMEText(payload.body, "plain", "utf-8")
     message["to"] = str(payload.to)
