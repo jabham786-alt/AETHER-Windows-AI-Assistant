@@ -1,9 +1,8 @@
 import base64
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from pathlib import Path
-from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Request
@@ -175,6 +174,8 @@ def calendar_events(max_results: int = Query(default=10, ge=1, le=50)):
 
 @router.post("/google/calendar")
 def create_calendar_event(payload: CalendarEventRequest):
+    if payload.start.tzinfo is None or payload.end.tzinfo is None:
+        raise HTTPException(status_code=400, detail="Calendar event start and end must include a timezone.")
     if payload.end <= payload.start:
         raise HTTPException(status_code=400, detail="Event end must be later than its start.")
     preview = {"summary": payload.summary, "start": payload.start.isoformat(), "end": payload.end.isoformat(), "description": payload.description}
