@@ -70,3 +70,33 @@ def test_deepgram_requires_api_key(monkeypatch):
     )
     assert response.status_code == 503
     assert "DEEPGRAM_API_KEY" in response.json()["detail"]
+
+def test_email_confirmation_token_is_bound_to_exact_preview():
+    preview = client.post("/api/integrations/google/gmail/send", json={
+        "to": "test@example.com",
+        "subject": "Approved subject",
+        "body": "Approved body",
+    })
+    assert preview.status_code == 200
+    data = preview.json()
+    assert data["status"] == "confirmation_required"
+    assert data["confirmation_token"]
+
+    changed = client.post("/api/integrations/google/gmail/send", json={
+        "to": "test@example.com",
+        "subject": "Changed subject",
+        "body": "Approved body",
+        "confirmation_token": data["confirmation_token"],
+    })
+    assert changed.status_code == 403
+
+
+def test_boolean_flag_cannot_bypass_email_confirmation():
+    response = client.post("/api/integrations/google/gmail/send", json={
+        "to": "test@example.com",
+        "subject": "Not actually sent",
+        "body": "A bare boolean is not an approval token.",
+        "confirmed": True,
+    })
+    assert response.status_code == 200
+    assert response.json()["status"] == "confirmation_required"
