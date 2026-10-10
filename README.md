@@ -2,132 +2,106 @@
 
 AETHER is a personal Windows AI desktop assistant.
 
-## Phase 2 — Voice AI (فری / لوکل)
+## Optional cloud integrations
 
-Phase 2 paid voice APIs پر منحصر نہیں ہے۔ موجودہ implementation میں:
+AETHER supports OpenAI, Gemini, or Groq for AI chat; local Faster-Whisper by default or optional Deepgram Nova-3 for speech-to-text; Tavily web search; and Google Calendar, read-only Contacts, read-only Gmail metadata/snippets, and Gmail sending after explicit confirmation. Windows local SAPI/pyttsx3 remains the default text-to-speech engine.
 
-- **Speech-to-Text:** Local `faster-whisper` — API key نہیں چاہیے
-- **Text-to-Speech:** Windows local TTS (`pyttsx3`) — API key نہیں چاہیے
-- **Microphone:** Windows/Electron browser media API
-- **Wake word:** Phase 2 میں Push-to-Talk رکھا گیا ہے؛ ہمیشہ سننے والا wake-word بعد میں optional module ہوگا
-- **Voice API:** `/api/voice/transcribe`, `/api/voice/speak`, `/api/voice/providers`
+Provider pricing and free tiers can change. Cloud speech and hosted AI/search services send the relevant request, audio, or query to that provider and may have usage limits or charges. Local Whisper remains available without a cloud key.
 
-### Phase 2 Setup
+### Configure providers
 
-اسی setup command سے voice dependencies بھی install ہوں گی:
+Copy .env.example to .env in the project root and fill only the keys you use. Never paste real keys into chat, frontend code, source control, logs, or screenshots.
 
-    Set-ExecutionPolicy -Scope Process Bypass
-    .\\scripts\\setup.ps1
+Groq:
+    AETHER_AI_PROVIDER=groq
+    AETHER_AI_MODEL=llama-3.3-70b-versatile
+    GROQ_API_KEY=your_key
 
-پہلی transcription پر Whisper model مقامی طور پر download ہو سکتا ہے۔ اسے ڈاؤن لوڈ کرنے کے لیے internet درکار ہوگا، لیکن استعمال کے لیے کسی paid API subscription کی ضرورت نہیں۔ پہلے سے چھوٹا `base` model default ہے۔ Windows CPU پر کمزور مشین ہو تو `AETHER_WHISPER_MODEL=tiny` استعمال کیا جا سکتا ہے۔
-
-**اہم:** فری ہونے کا مطلب یہ نہیں کہ کوئی cloud provider ہمیشہ کے لیے مفت قیمت کی ضمانت دیتا ہے؛ AETHER Phase 2 میں بنیادی voice path cloud/API billing سے آزاد رکھا گیا ہے۔
-
-## Phase 4 — Memory + RAG
-
-Phase 4 adds a local-first memory layer. It does not require a paid vector database or embedding API.
-
-### Current capabilities
-
-- SQLite `memories` table
-- Create, list, search, edit and delete memories
-- Memory categories and source metadata
-- Lightweight local keyword retrieval
-- Relevant memories are injected into AI Chat as context when matched
-- Memory management UI in the desktop app
-- Memory data stays in AETHER's local SQLite database
-
-### Phase 4 API
-
-- GET `/api/memories`
-- POST `/api/memories`
-- PATCH `/api/memories/{memory_id}`
-- DELETE `/api/memories/{memory_id}`
-- GET `/api/memories/search?q=...`
-
-This is intentionally a safe incremental RAG foundation. Semantic embeddings, document ingestion, chunking and vector indexes can be added later without giving the AI arbitrary filesystem or shell access.
-
-## Phase 3 — Windows Control / Automation
-
-Phase 3 میں محفوظ local Windows automation شامل ہے۔ اس میں paid API کی ضرورت نہیں ہے۔
-
-### موجودہ capabilities
-
-- Allowlisted apps: Notepad, Calculator, Paint, Explorer
-- HTTP/HTTPS URL اور web search کھولنا
-- موجودہ folders کھولنا
-- files/folders search کرنا
-- folder یا empty file بنانا
-- file rename/copy/move/delete
-- action history SQLite میں محفوظ کرنا
-- risk-based permission system
-- high-risk delete کے لیے explicit confirmation
-- arbitrary shell/PowerShell execution **نہیں** ہے
-
-### Security model
-
-AETHER کسی AI-generated string کو براہِ راست shell command کے طور پر execute نہیں کرتا۔ ہر request کو ایک مخصوص allowlisted action، validation اور permission check سے گزرنا ہوتا ہے:
-
-    AI / UI
-      ↓
-    Allowed Action
-      ↓
-    Parameter Validation
-      ↓
-    Risk Check
-      ↓
-    Confirmation (when required)
-      ↓
-    Windows Action
-      ↓
-    Action History
-
-Low-risk actions براہِ راست چل سکتے ہیں۔ File creation/rename/copy/move confirmation مانگتے ہیں، جبکہ delete high-risk ہے اور ہمیشہ explicit confirmation مانگتا ہے۔
-
-### Phase 3 API
-
-- GET `/api/automation/actions`
-- POST `/api/automation/execute`
-- GET `/api/automation/history`
-
-Phase 3 کا اگلا incremental حصہ Windows volume/mute، screenshots، richer browser automation اور voice-to-action intent planning ہو سکتا ہے؛ انہیں arbitrary command execution کے بغیر permission model کے ساتھ شامل کیا جائے گا۔
-
-## Phase 1 — Foundation
-
-- Electron desktop shell
-- React + TypeScript interface
-- Secure preload bridge with context isolation and Node disabled in renderer
-- FastAPI backend bound to 127.0.0.1
-- SQLite + SQLAlchemy persistence
-- OpenAI and Gemini provider adapters
-- AI Chat
-- CPU, memory, disk and OS monitoring
-- Environment-based secrets
-- Pytest and GitHub Actions CI
-
-## Setup
-
-Requirements: Windows 10/11, Node.js 22+, Python 3.12+, Git, and an OpenAI or Gemini API key.
-
-PowerShell:
-
-    Set-ExecutionPolicy -Scope Process Bypass
-    .\scripts\setup.ps1
-
-Configure .env with one provider:
-
-    AETHER_AI_PROVIDER=openai
-    AETHER_AI_MODEL=gpt-4.1-mini
-    OPENAI_API_KEY=your_key
-
-or:
-
+Gemini:
     AETHER_AI_PROVIDER=gemini
     AETHER_AI_MODEL=gemini-2.5-flash
     GEMINI_API_KEY=your_key
 
-Start:
+Deepgram transcription (optional; cloud audio processing):
+    AETHER_STT_PROVIDER=deepgram
+    DEEPGRAM_API_KEY=your_key
 
+Keep transcription local:
+    AETHER_STT_PROVIDER=local-whisper
+
+Tavily web search:
+    TAVILY_API_KEY=your_key
+
+Restart AETHER after changing .env.
+
+### Google Calendar, Contacts and Gmail setup
+
+1. In Google Cloud Console, create/select a project and enable Google Calendar API, People API, and Gmail API.
+2. Configure the OAuth consent screen and create an OAuth client. Add this exact authorized redirect URI: http://127.0.0.1:8765/api/integrations/google/callback.
+3. Save the downloaded OAuth client JSON as backend/data/google_oauth_client.json. This file is ignored by Git.
+4. Install dependencies with .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt, then start AETHER.
+5. Open http://127.0.0.1:8765/api/integrations/google/auth-url, copy the returned authorization_url into your browser, and approve the requested Google permissions.
+6. The OAuth token is saved locally to backend/data/google_token.json and ignored by Git.
+
+The OAuth redirect URI must match exactly. Google may require a test user to be added to the consent screen while the app is in testing mode.
+
+### Integration API
+
+- GET /api/integrations/status — provider configuration status (never returns API keys)
+- POST /api/integrations/search — Tavily web search
+- GET /api/integrations/google/auth-url and GET /api/integrations/google/callback — Google OAuth
+- GET /api/integrations/google/calendar — upcoming events
+- POST /api/integrations/google/calendar — create event; first request returns a confirmation preview, then repeat with the returned confirmation_token
+- GET /api/integrations/google/contacts — contact names, emails and phone numbers
+- GET /api/integrations/google/gmail — message metadata and snippets, not full email bodies
+- POST /api/integrations/google/gmail/send — first request returns a preview; repeat with the returned confirmation_token only after reviewing it
+
+Google scopes are limited to Calendar event access, read-only contacts, read-only Gmail and Gmail send. Disconnect by deleting backend/data/google_token.json and revoking AETHER in your Google Account security settings.
+
+## Phase 2 — Voice AI
+
+- Speech-to-Text: Local faster-whisper by default; optional Deepgram.
+- Text-to-Speech: Windows local TTS (pyttsx3), no API key required.
+- Microphone: Windows/Electron browser media API.
+- Wake word: Push-to-Talk; no always-listening microphone.
+- Voice API: /api/voice/transcribe, /api/voice/speak, /api/voice/providers.
+
+PowerShell setup:
+
+    Set-ExecutionPolicy -Scope Process Bypass
+    .\scripts\setup.ps1
+
+The first local Whisper transcription may download a model; internet is needed for that download but not for subsequent local inference. Set AETHER_WHISPER_MODEL=tiny on lower-powered Windows PCs.
+
+## Phase 4 — Memory + RAG
+
+- SQLite local memories, categories and source metadata.
+- Create, list, search, edit and delete memories.
+- Local keyword retrieval injects relevant memories into AI Chat.
+- No hosted vector database or embedding API required.
+
+API: GET /api/memories, POST /api/memories, PATCH /api/memories/{memory_id}, DELETE /api/memories/{memory_id}, GET /api/memories/search?q=....
+
+## Phase 3 — Windows Control / Automation
+
+- Allowlisted apps: Notepad, Calculator, Paint, Explorer.
+- Open HTTP/HTTPS URLs and existing folders; search files; create, rename, copy, move and delete files.
+- SQLite action history, risk-based permissions and explicit confirmation for risky actions.
+- Arbitrary shell/PowerShell execution is intentionally excluded.
+
+The existing Policy Engine and Windows action allowlist remain authoritative. Cloud integrations do not execute web-search results as commands. Sending email and creating calendar events require a second request with the short-lived confirmation_token returned in the preview; inspect the preview first. Tokens are single-use, expire after five minutes, and are bound to the exact action data.
+
+## Foundation and setup
+
+- Electron desktop shell; React + TypeScript UI.
+- Secure preload bridge, context isolation and disabled Node integration in renderer.
+- FastAPI bound to 127.0.0.1; SQLite/SQLAlchemy.
+- Environment-based secrets and pytest/GitHub Actions CI.
+
+Requirements: Windows 10/11, Node.js 22+, Python 3.12+, Git.
+
+    Set-ExecutionPolicy -Scope Process Bypass
+    .\scripts\setup.ps1
     .\scripts\dev.ps1
 
 Backend tests:
@@ -136,20 +110,7 @@ Backend tests:
 
 ## Security
 
-The renderer has no Node.js access. Electron uses context isolation and sandboxing. FastAPI listens only on localhost. API secrets stay in environment variables and are not committed.
-
-Arbitrary Windows command execution is intentionally excluded from Phase 1. Voice control, Windows automation, memory/RAG, work automation, multi-agent orchestration and plugins are planned for later phases with explicit permission boundaries.
-
-## Roadmap
-
-1. Phase 1 — Foundation
-2. Phase 2 — Voice
-3. Phase 3 — Windows Control
-4. Phase 4 — Memory + RAG
-5. Phase 5 — Work Automation
-6. Phase 6 — Multi-Agent
-7. Phase 7 — Plugins
-8. Phase 8 — Production
+API keys and Google OAuth tokens stay on the backend/local machine and must never be committed. Google OAuth client and token files are excluded by .gitignore. Cloud providers receive data required for the feature being used. FastAPI is intended to listen only on localhost. No integration grants the model arbitrary shell or PowerShell access.
 
 ## License
 
